@@ -4,23 +4,19 @@
     using System.Collections.Generic;
     using System.IO;
     using System.Linq;
-    using System.Runtime.InteropServices.WindowsRuntime;
     using Newtonsoft.Json.Linq;
     using YamlDotNet.Serialization;
 
     class Program
     {
         private const string SourceExtension = ".json";
-        private const string DestExtension = ".yml";
+        private const string DestExtension = ".xyml";
         private const string Categories = "categories";
-        private const string Author = "author";
-        private const string Version = "version";
         private const string Name = "name";
         private const string Description = "description";
         private const string Commands = "commands";
         private const string Usage = "usage";
-        private const string Contributors = "contributors";
-        private const string Homepage = "homepage";
+        
 
         private static readonly Dictionary<string, string> ModeNameMapping = new Dictionary<string, string>()
         {
@@ -45,11 +41,17 @@
             {
                 return null;
             }
-            var results = new List<Category>();
 
             var categories = JObject.Parse(jobject[Categories].ToString());
-
             var keys = categories.Properties().Select(p => p.Name).ToList();
+
+            if (0 == keys.Count)
+            {
+                return null;
+            }
+
+            var results = new List<Category>();
+
             foreach (var key in keys)
             {
                 var temp = jobject[Categories][key];
@@ -60,7 +62,7 @@
                     Usage = (string) temp[Usage],
                     Commands = temp[Commands].ToObject<List<Command>>()
                 };
-                if (null != temp[Categories])
+                if (0 != JObject.Parse(temp[Categories].ToString()).Count)
                 {
                     category.Categories = ParseCategoryObjectToArray(temp);
                 }
@@ -84,8 +86,8 @@
                 if (null != c.Categories && 0 != c.Categories.Count)
                 {
                     SaveCategories(c.Categories);
-                    c.Categories = null;
                 }
+                c.Categories = null;
                 Save(c.Name, c);
                 Directory.SetCurrentDirectory(new DirectoryInfo(Directory.GetCurrentDirectory()).Parent.FullName);
             }
@@ -103,17 +105,15 @@
                 return;
             }
             var modeName = ModeNameMapping[mode];
-            Directory.CreateDirectory(Path.Combine(destRoot, modeName));
-            var vm = new AzureXplatViewModel();
+            var modePath = Path.Combine(destRoot, modeName);
+            Directory.CreateDirectory(modePath);
+            Directory.SetCurrentDirectory(modePath);
+            var vm = new AzureXplatCliViewModel();
             using (var str = new StreamReader(azureFilePath))
             {
                 var jobject = JObject.Parse(str.ReadToEnd());
                 vm.Name = (string) jobject[Name];
                 vm.Description = (string) jobject[Description];
-                vm.Author = (string) jobject[Author];
-                vm.Version = (string) jobject[Version];
-                vm.Contributors = string.Join(", ", (JArray)jobject[Contributors]);
-                vm.Homepage = (string) jobject[Homepage];
                 vm.Usage = (string) jobject[Usage];
             }
 
@@ -122,11 +122,13 @@
             {
                 var jobject = JObject.Parse(str.ReadToEnd());
                 vm.Commands = jobject[Commands].ToObject<List<Command>>();
-                vm.Categories = ParseCategoryObjectToArray(jobject);
+                if (null != jobject[Categories])
+                {
+                    SaveCategories(ParseCategoryObjectToArray(jobject));
+                }
             }
-            Directory.SetCurrentDirectory(Path.Combine(destRoot, modeName));
-            Save(modeName, vm.Commands);
-            SaveCategories(vm.Categories);
+            Directory.SetCurrentDirectory(modePath);
+            Save(modeName, vm);
         }
 
         /// <summary>

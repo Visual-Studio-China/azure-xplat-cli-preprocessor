@@ -51,16 +51,18 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Models\AzureXplatViewModel.cs" />
+    <Compile Include="Models\AzureXplatCliViewModel.cs" />
     <Compile Include="Models\BaseProp.cs" />
     <Compile Include="Models\Category.cs" />
     <Compile Include="Models\Command.cs" />
     <Compile Include="Models\Option.cs" />
     <Compile Include="Program.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Properties\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
