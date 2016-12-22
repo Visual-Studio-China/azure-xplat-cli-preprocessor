@@ -20,7 +20,7 @@
         
         [YamlMember(Alias = "commands")]
         [JsonProperty("commands")]
-        public List<Command> Commands { get; set; } = new List<Command>();
+        public List<Command> Commands { get; set; }
 
         [JsonExtensionData]
         public Dictionary<string, object> Metadata = new Dictionary<string, object>();

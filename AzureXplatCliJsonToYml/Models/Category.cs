@@ -9,10 +9,10 @@
     {
         [YamlMember(Alias = "commands")]
         [JsonProperty("commands")]
-        public List<Command> Commands { get; set; } = new List<Command>();
+        public List<Command> Commands { get; set; }
 
         [YamlMember(Alias = "categories")]
         [JsonProperty("categories")]
-        public List<Category> Categories { get; set; } = new List<Category>();
+        public List<Category> Categories { get; set; }
     }
 }

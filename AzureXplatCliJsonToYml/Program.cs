@@ -25,8 +25,7 @@
             {
                 if (null == args || 4 != args.Length || string.IsNullOrEmpty(args[0]))
                 {
-                    throw new Exception(
-                        "Invalid arguments: extecting mode, azure .json file, plugins .json file and destination directory!");
+                    throw new Exception("Invalid arguments: expecting mode, azure .json file, plugins .json file and destination directory!");
                 }
                 if (!string.Equals(Constants.SourceExtension, Path.GetExtension(args[1])) ||
                     !string.Equals(Constants.SourceExtension, Path.GetExtension(args[2])))
@@ -46,7 +45,6 @@
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine(ex.ToString());
                 Console.ForegroundColor = color;
-                throw;
             }
         }
 
