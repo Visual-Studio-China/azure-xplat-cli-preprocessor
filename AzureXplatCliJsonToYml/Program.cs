@@ -53,7 +53,9 @@
             var file = Path.Combine(Directory.GetCurrentDirectory(), string.Concat(name, Constants.DestExtension));
             using (var stw = new StreamWriter(file))
             {
-                stw.Write(Ser.Serialize(obj));
+                stw.Write("### ");
+                stw.WriteLine(Constants.SerializeComments.TrimEnd('\r'));
+                stw.Write(Ser.Serialize(obj), true);
             }
         }
 

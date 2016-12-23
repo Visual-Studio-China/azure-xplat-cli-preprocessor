@@ -4,8 +4,9 @@
 
     public static class Constants
     {
+        public const string SerializeComments = "YamlMime:AzureXplatCli";
         public const string SourceExtension = ".json";
-        public const string DestExtension = ".xyml";
+        public const string DestExtension = ".yml";
         public const string Categories = "categories";
         public const string Name = "name";
         public const string Description = "description";
