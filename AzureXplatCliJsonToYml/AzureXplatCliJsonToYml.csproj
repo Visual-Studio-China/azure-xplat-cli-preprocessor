@@ -53,8 +53,7 @@
   <ItemGroup>
     <Compile Include="Constants.cs" />
     <Compile Include="Models\AzureXplatCliViewModel.cs" />
-    <Compile Include="Models\BaseProp.cs" />
-    <Compile Include="Models\Category.cs" />
+    <Compile Include="Models\AzureXplatCliBaseModel.cs" />
     <Compile Include="Models\Command.cs" />
     <Compile Include="Models\Option.cs" />
     <Compile Include="Program.cs" />

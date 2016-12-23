@@ -3,8 +3,12 @@
     using Newtonsoft.Json;
     using YamlDotNet.Serialization;
 
-    public class BaseProp
+    public class AzureXplatCliBaseModel
     {
+        [YamlMember(Alias = "uid")]
+        [JsonProperty("uid")]
+        public string Uid { get; set; }
+
         [YamlMember(Alias = "name")]
         [JsonProperty("name")]
         public string Name { get; set; }

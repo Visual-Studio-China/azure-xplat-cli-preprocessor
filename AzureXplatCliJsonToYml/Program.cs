@@ -55,64 +55,33 @@
             {
                 stw.Write("### ");
                 stw.WriteLine(Constants.SerializeComments.TrimEnd('\r'));
-                stw.Write(Ser.Serialize(obj), true);
+                stw.Write(Ser.Serialize(obj));
             }
         }
 
-        private static List<Category> ParseCategoryObjectToArray(JToken jobject)
+        private static void ParseCategories(JToken jobject)
         {
             if (jobject?[Constants.Categories] == null)
             {
-                return null;
+                return;
             }
 
             var categories = JObject.Parse(jobject[Constants.Categories].ToString());
             var keys = categories.Properties().Select(p => p.Name).ToList();
-
-            if (0 == keys.Count)
-            {
-                return null;
-            }
-
-            var results = new List<Category>();
-
             foreach (var key in keys)
             {
                 var temp = jobject[Constants.Categories][key];
-                var category = new Category
+                var category = new AzureXplatCliViewModel
                 {
                     Name = (string) temp[Constants.Name],
                     Description = (string) temp[Constants.Description],
                     Usage = (string) temp[Constants.Usage],
                     Commands = temp[Constants.Commands].ToObject<List<Command>>()
                 };
-                if (0 != JObject.Parse(temp[Constants.Categories].ToString()).Count)
-                {
-                    category.Categories = ParseCategoryObjectToArray(temp);
-                }
-                results.Add(category);
-            }
-            return results;
-        }
-
-        private static void SaveCategories(IReadOnlyCollection<Category> categories)
-        {
-            // foreach vm.categories, output commands to one page, output category to one page
-            if (null == categories || 0 == categories.Count)
-            {
-                return;
-            }
-
-            foreach (var c in categories)
-            {
-                Directory.CreateDirectory(c.Name);
-                Directory.SetCurrentDirectory(Path.Combine(Directory.GetCurrentDirectory(), c.Name));
-                if (null != c.Categories && 0 != c.Categories.Count)
-                {
-                    SaveCategories(c.Categories);
-                }
-                c.Categories = null;
-                Save(c.Name, c);
+                Directory.CreateDirectory(category.Name);
+                Directory.SetCurrentDirectory(Path.Combine(Directory.GetCurrentDirectory(), category.Name));
+                Save(category.Name, category);
+                ParseCategories(temp);
                 Directory.SetCurrentDirectory(new DirectoryInfo(Directory.GetCurrentDirectory()).Parent.FullName);
             }
         }
@@ -148,7 +117,7 @@
                 vm.Commands = jobject[Constants.Commands].ToObject<List<Command>>();
                 if (null != jobject[Constants.Categories])
                 {
-                    SaveCategories(ParseCategoryObjectToArray(jobject));
+                    ParseCategories(jobject);
                 }
             }
             Directory.SetCurrentDirectory(modePath);
