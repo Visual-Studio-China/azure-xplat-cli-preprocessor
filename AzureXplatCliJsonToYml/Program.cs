@@ -78,11 +78,19 @@
                     Usage = (string) temp[Constants.Usage],
                     Commands = temp[Constants.Commands].ToObject<List<Command>>()
                 };
-                Directory.CreateDirectory(category.Name);
-                Directory.SetCurrentDirectory(Path.Combine(Directory.GetCurrentDirectory(), category.Name));
                 Save(category.Name, category);
-                ParseCategories(temp);
-                Directory.SetCurrentDirectory(new DirectoryInfo(Directory.GetCurrentDirectory()).Parent.FullName);
+                if (null != temp[Constants.Categories] && 0 !=
+                    JObject.Parse(temp[Constants.Categories].ToString())
+                        .Properties()
+                        .Select(p => p.Name)
+                        .ToList()
+                        .Count)
+                {
+                    Directory.CreateDirectory(category.Name);
+                    Directory.SetCurrentDirectory(Path.Combine(Directory.GetCurrentDirectory(), category.Name));
+                    ParseCategories(temp);
+                    Directory.SetCurrentDirectory(new DirectoryInfo(Directory.GetCurrentDirectory()).Parent.FullName);
+                }
             }
         }
 
@@ -99,8 +107,6 @@
             }
             var modeName = Constants.ModeNameMapping[mode];
             var modePath = Path.Combine(destRoot, modeName);
-            Directory.CreateDirectory(modePath);
-            Directory.SetCurrentDirectory(modePath);
             var vm = new AzureXplatCliViewModel();
             using (var str = new StreamReader(azureFilePath))
             {
@@ -109,19 +115,21 @@
                 vm.Description = (string) jobject[Constants.Description];
                 vm.Usage = (string) jobject[Constants.Usage];
             }
-
             // use plugins.arm/asm.json to set commands and categories to fullfill the filepath
             using (var str = new StreamReader(pluginsFilePath))
             {
                 var jobject = JObject.Parse(str.ReadToEnd());
                 vm.Commands = jobject[Constants.Commands].ToObject<List<Command>>();
+                Directory.SetCurrentDirectory(destRoot);
+                Save(modeName, vm);
+                Directory.CreateDirectory(modePath);
+                Directory.SetCurrentDirectory(modePath);
                 if (null != jobject[Constants.Categories])
                 {
                     ParseCategories(jobject);
                 }
             }
             Directory.SetCurrentDirectory(modePath);
-            Save(modeName, vm);
         }
     }
 }
