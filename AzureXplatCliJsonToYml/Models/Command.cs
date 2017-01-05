@@ -1,13 +1,17 @@
 ﻿namespace AzureXplatCliJsonToYml
 {
+    using System;
     using System.Collections.Generic;
+    using Microsoft.DocAsCode.Common.EntityMergers;
     using Newtonsoft.Json;
     using YamlDotNet.Serialization;
 
+    [Serializable]
     public class Command
     {
         [YamlMember(Alias = "name")]
         [JsonProperty("name")]
+        [MergeOption(MergeOption.MergeKey)]
         public string Name { get; set; }
 
         [YamlMember(Alias = "description")]

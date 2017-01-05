@@ -1,9 +1,11 @@
 ﻿namespace AzureXplatCliJsonToYml
 {
+    using System;
     using System.Collections.Generic;
     using Newtonsoft.Json;
     using YamlDotNet.Serialization;
 
+    [Serializable]
     public class AzureXplatCliViewModel : AzureXplatCliBaseModel
     {
         [YamlMember(Alias = "commands")]
