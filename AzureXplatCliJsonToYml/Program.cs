@@ -27,14 +27,13 @@
                 {
                     throw new Exception("Invalid arguments: expecting mode, azure .json file, plugins .json file and destination directory!");
                 }
-                if (!string.Equals(Constants.SourceExtension, Path.GetExtension(args[1])) ||
-                    !string.Equals(Constants.SourceExtension, Path.GetExtension(args[2])))
+                if (!ValidFile(args[1]))
                 {
-                    throw new Exception("Invalid arguments: .json file is expected!");
+                    throw new Exception("Invalid arguments: please make sure the second argument is .json file and exists!");
                 }
-                if (!File.Exists(args[1]) || !File.Exists(args[2]))
+                if (!ValidFile(args[2]))
                 {
-                    throw new Exception("Invalid arguments: file not exits!");
+                    throw new Exception("Invalid arguments: please make sure the third argument is .json file and exists!");
                 }
 
                 SplitJsonToYamls(args[0], args[1], args[2], args[3]);
@@ -48,20 +47,25 @@
             }
         }
 
+        private static bool ValidFile(string path, string expectedExtension = Constants.SourceExtension)
+        {
+            return string.Equals(expectedExtension, Path.GetExtension(path)) && File.Exists(path);
+        }
+
         private static void Save(string name, object obj)
         {
             var file = Path.Combine(Directory.GetCurrentDirectory(), string.Concat(name, Constants.DestExtension));
             using (var stw = new StreamWriter(file))
             {
                 stw.Write("### ");
-                stw.WriteLine(Constants.SerializeComments.TrimEnd('\r'));
+                stw.WriteLine(Constants.YamlMime.TrimEnd('\r'));
                 stw.Write(Ser.Serialize(obj));
             }
         }
 
         private static void ParseCategories(JToken jobject)
         {
-            if (jobject?[Constants.Categories] == null)
+            if (null == jobject?[Constants.Categories])
             {
                 return;
             }
@@ -79,12 +83,8 @@
                     Commands = temp[Constants.Commands].ToObject<List<Command>>()
                 };
                 Save(category.Name, category);
-                if (null != temp[Constants.Categories] && 0 !=
-                    JObject.Parse(temp[Constants.Categories].ToString())
-                        .Properties()
-                        .Select(p => p.Name)
-                        .ToList()
-                        .Count)
+                var categoriesCount = JObject.Parse(temp[Constants.Categories].ToString()).Properties().Select(p => p.Name).ToList().Count;
+                if (null != temp[Constants.Categories] && 0 != categoriesCount)
                 {
                     Directory.CreateDirectory(category.Name);
                     Directory.SetCurrentDirectory(Path.Combine(Directory.GetCurrentDirectory(), category.Name));
@@ -96,12 +96,7 @@
 
         private static void SplitJsonToYamls(string mode, string azureFilePath, string pluginsFilePath, string destRoot)
         {
-            if (string.IsNullOrEmpty(mode) || !File.Exists(azureFilePath) || !File.Exists(pluginsFilePath))
-            {
-                return;
-            }
-            if (!string.Equals(Constants.SourceExtension, Path.GetExtension(azureFilePath)) ||
-                    !string.Equals(Constants.SourceExtension, Path.GetExtension(pluginsFilePath)))
+            if (string.IsNullOrEmpty(mode) || !ValidFile(azureFilePath) || !ValidFile(pluginsFilePath))
             {
                 return;
             }
