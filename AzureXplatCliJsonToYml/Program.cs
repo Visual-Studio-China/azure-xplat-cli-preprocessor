@@ -27,13 +27,13 @@
                 {
                     throw new Exception("Invalid arguments: expecting mode, azure .json file, plugins .json file and destination directory!");
                 }
-                if (!ValidFile(args[1]))
+                if (!IsValidFile(args[1]))
                 {
-                    throw new Exception("Invalid arguments: please make sure the second argument is .json file and exists!");
+                    throw new Exception("Invalid arguments: please make sure the second argument is .json file and it does exist!");
                 }
-                if (!ValidFile(args[2]))
+                if (!IsValidFile(args[2]))
                 {
-                    throw new Exception("Invalid arguments: please make sure the third argument is .json file and exists!");
+                    throw new Exception("Invalid arguments: please make sure the third argument is .json file and it does exist!");
                 }
 
                 SplitJsonToYamls(args[0], args[1], args[2], args[3]);
@@ -47,69 +47,24 @@
             }
         }
 
-        private static bool ValidFile(string path, string expectedExtension = Constants.SourceExtension)
-        {
-            return string.Equals(expectedExtension, Path.GetExtension(path)) && File.Exists(path);
-        }
-
-        private static void Save(string name, object obj)
-        {
-            var file = Path.Combine(Directory.GetCurrentDirectory(), string.Concat(name, Constants.DestExtension));
-            using (var stw = new StreamWriter(file))
-            {
-                stw.Write("### ");
-                stw.WriteLine(Constants.YamlMime.TrimEnd('\r'));
-                stw.Write(Ser.Serialize(obj));
-            }
-        }
-
-        private static void ParseCategories(JToken jobject)
-        {
-            if (null == jobject?[Constants.Categories])
-            {
-                return;
-            }
-
-            var categories = JObject.Parse(jobject[Constants.Categories].ToString());
-            var keys = categories.Properties().Select(p => p.Name).ToList();
-            foreach (var key in keys)
-            {
-                var temp = jobject[Constants.Categories][key];
-                var category = new AzureXplatCliViewModel
-                {
-                    Name = (string) temp[Constants.Name],
-                    Description = (string) temp[Constants.Description],
-                    Usage = (string) temp[Constants.Usage],
-                    Commands = temp[Constants.Commands].ToObject<List<Command>>()
-                };
-                Save(category.Name, category);
-                var categoriesCount = JObject.Parse(temp[Constants.Categories].ToString()).Properties().Select(p => p.Name).ToList().Count;
-                if (null != temp[Constants.Categories] && 0 != categoriesCount)
-                {
-                    Directory.CreateDirectory(category.Name);
-                    Directory.SetCurrentDirectory(Path.Combine(Directory.GetCurrentDirectory(), category.Name));
-                    ParseCategories(temp);
-                    Directory.SetCurrentDirectory(new DirectoryInfo(Directory.GetCurrentDirectory()).Parent.FullName);
-                }
-            }
-        }
-
         private static void SplitJsonToYamls(string mode, string azureFilePath, string pluginsFilePath, string destRoot)
         {
-            if (string.IsNullOrEmpty(mode) || !ValidFile(azureFilePath) || !ValidFile(pluginsFilePath))
+            if (string.IsNullOrEmpty(mode) || !IsValidFile(azureFilePath) || !IsValidFile(pluginsFilePath))
             {
                 return;
             }
+
             var modeName = Constants.ModeNameMapping[mode];
             var modePath = Path.Combine(destRoot, modeName);
             var vm = new AzureXplatCliViewModel();
             using (var str = new StreamReader(azureFilePath))
             {
                 var jobject = JObject.Parse(str.ReadToEnd());
-                vm.Name = (string) jobject[Constants.Name];
-                vm.Description = (string) jobject[Constants.Description];
-                vm.Usage = (string) jobject[Constants.Usage];
+                vm.Name = (string)jobject[Constants.Name];
+                vm.Description = (string)jobject[Constants.Description];
+                vm.Usage = (string)jobject[Constants.Usage];
             }
+
             // use plugins.arm/asm.json to set commands and categories to fullfill the filepath
             using (var str = new StreamReader(pluginsFilePath))
             {
@@ -121,10 +76,60 @@
                 Directory.SetCurrentDirectory(modePath);
                 if (null != jobject[Constants.Categories])
                 {
-                    ParseCategories(jobject);
+                    ParseCategoriesRecursive(jobject);
                 }
             }
+
             Directory.SetCurrentDirectory(modePath);
+        }
+
+        private static void ParseCategoriesRecursive(JToken jobject)
+        {
+            if (null == jobject?[Constants.Categories])
+            {
+                return;
+            }
+            
+            var keys = JObject.Parse(jobject[Constants.Categories].ToString()).Properties().Select(p => p.Name).ToList();
+            foreach (var key in keys)
+            {
+                var temp = jobject[Constants.Categories][key];
+                var category = new AzureXplatCliViewModel
+                {
+                    Name = (string)temp[Constants.Name],
+                    Description = (string)temp[Constants.Description],
+                    Usage = (string)temp[Constants.Usage],
+                    Commands = temp[Constants.Commands].ToObject<List<Command>>()
+                };
+
+                Save(category.Name, category);
+                var categoriesCount = JObject.Parse(temp[Constants.Categories].ToString()).Properties().Select(p => p.Name).ToList().Count;
+
+                if (null != temp[Constants.Categories] && 0 != categoriesCount)
+                {
+                    Directory.CreateDirectory(category.Name);
+                    Directory.SetCurrentDirectory(Path.Combine(Directory.GetCurrentDirectory(), category.Name));
+                    ParseCategoriesRecursive(temp);
+                    Directory.SetCurrentDirectory(new DirectoryInfo(Directory.GetCurrentDirectory()).Parent.FullName);
+                }
+            }
+        }
+
+        private static bool IsValidFile(string path, string expectedExtension = Constants.SourceExtension)
+        {
+            return string.Equals(expectedExtension, Path.GetExtension(path)) && File.Exists(path);
+        }
+
+        private static void Save(string name, object obj)
+        {
+            var file = Path.Combine(Directory.GetCurrentDirectory(), string.Concat(name, Constants.DestExtension));
+
+            using (var stw = new StreamWriter(file))
+            {
+                stw.Write("### ");
+                stw.WriteLine(Constants.YamlMime.TrimEnd('\r'));
+                stw.Write(Ser.Serialize(obj));
+            }
         }
     }
 }
